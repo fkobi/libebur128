@@ -7,6 +7,8 @@ pub fn build(b: *std.Build) void {
     const options = b.addOptions();
     const shared_lib = b.option(bool, "shared_lib", "Build the library as shared") orelse true;
     options.addOption(bool, "shared_lib", shared_lib);
+    const build_example = b.option(bool, "build_example", "Build & install example") orelse false;
+    options.addOption(bool, "build_example", build_example);
 
     const c_lib = b.addLibrary(.{
         .name = "libebur128",
@@ -24,6 +26,22 @@ pub fn build(b: *std.Build) void {
 
     b.installArtifact(c_lib);
     b.installFile("ebur128/ebur128.h", "include/ebur128.h");
+
+    if (build_example) {
+        const example = b.addExecutable(.{
+            .name = "minimal-example",
+            .root_module = b.createModule(.{
+                .link_libc = true, // As this is the C implementation
+                .target = target,
+                .optimize = optimize,
+            }),
+        });
+        example.root_module.addCSourceFile(.{ .file = b.path("example/minimal-example.c") });
+        example.root_module.linkSystemLibrary("sndfile", .{});
+        example.root_module.linkLibrary(c_lib);
+
+        b.installArtifact(example);
+    }
 
     // This creates a module, which represents a collection of source files alongside
     // some compilation options, such as optimization mode and linked system libraries.
