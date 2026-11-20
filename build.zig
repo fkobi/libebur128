@@ -4,6 +4,23 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const c_lib = b.addLibrary(.{
+        .name = "libebur128",
+        .linkage = .static, // TODO: make this switchable
+        .root_module = b.createModule(.{
+            .link_libc = true, // As this is the C implementation
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    c_lib.root_module.addCSourceFile(.{
+        .file = b.path("ebur128/ebur128.c"),
+    });
+
+    b.installArtifact(c_lib);
+    b.installFile("ebur128/ebur128.h", "include/ebur128.h");
+
     // This creates a module, which represents a collection of source files alongside
     // some compilation options, such as optimization mode and linked system libraries.
     // Zig modules are the preferred way of making Zig code available to consumers.
