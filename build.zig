@@ -4,9 +4,13 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const options = b.addOptions();
+    const shared_lib = b.option(bool, "shared_lib", "Build the library as shared") orelse true;
+    options.addOption(bool, "shared_lib", shared_lib);
+
     const c_lib = b.addLibrary(.{
         .name = "libebur128",
-        .linkage = .static, // TODO: make this switchable
+        .linkage = if (shared_lib) .dynamic else .static,
         .root_module = b.createModule(.{
             .link_libc = true, // As this is the C implementation
             .target = target,
